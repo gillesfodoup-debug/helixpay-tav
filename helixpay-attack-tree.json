@@ -1,0 +1,301 @@
+{
+  "version": "2.0",
+  "type": "threat-model",
+  "summary": {
+    "title": "HelixPay Attack Tree",
+    "owner": "gillesfodoup-debug",
+    "description": "Attack tree for TAV assessment - MSc Cybersecurity. Root goal: Steal customer payment data from HelixPay.",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [],
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "Attack Tree - Steal Customer Payment Data",
+        "diagramType": "STRIDE",
+        "placeholder": "Attack tree based on HelixPay TAV workbook findings",
+        "thumbnail": "",
+        "version": "2.0",
+        "cells": [
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 220, "height": 60 },
+            "position": { "x": 490, "y": 680 },
+            "angle": 0,
+            "id": "root",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "Steal Customer Payment Data\nfrom HelixPay" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "Steal Customer Payment Data from HelixPay",
+              "description": "ROOT - Attacker goal. Targets DB-01 holding 1.2M wallet user records and payment card data.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 140, "height": 50 },
+            "position": { "x": 200, "y": 550 },
+            "angle": 0,
+            "id": "payment-server",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "Payment Server\n(App-01)" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "Payment Server (App-01)",
+              "description": "OR branch. Entry point via the payments-svc application running log4j-core 2.14.1.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 120, "height": 50 },
+            "position": { "x": 540, "y": 550 },
+            "angle": 0,
+            "id": "db-access",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "DB Access\n(DB-01)" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "DB Access (DB-01)",
+              "description": "OR branch. PostgreSQL database holding 1.2M user records. Final target in most attack paths.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 140, "height": 50 },
+            "position": { "x": 860, "y": 550 },
+            "angle": 0,
+            "id": "cloud-identity",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "Cloud Identity\n(Entra ID)" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "Cloud Identity (Entra ID)",
+              "description": "OR branch. 71% MFA coverage means 29% of accounts (incl. 6 Global Admins) have no second factor.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 130, "height": 50 },
+            "position": { "x": 80, "y": 410 },
+            "angle": 0,
+            "id": "log4shell",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "Log4Shell\nCVE-2021-44228" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "Log4Shell CVE-2021-44228",
+              "description": "OR branch. CVSS 10.0. Confirmed in SBOM (log4j-core 2.14.1). In CISA KEV. One malicious HTTP request gives full code execution on payment server.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 130, "height": 50 },
+            "position": { "x": 260, "y": 410 },
+            "angle": 0,
+            "id": "priv-esc",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "Privilege\nEscalation" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "Privilege Escalation",
+              "description": "OR branch. PostgreSQL CVE - local privilege escalation. Upgraded to Critical because suspicious svc-backup activity seen at 2:40 AM in Source E logs.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 130, "height": 50 },
+            "position": { "x": 470, "y": 410 },
+            "angle": 0,
+            "id": "lateral",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "Lateral\nMovement" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "Lateral Movement",
+              "description": "OR branch. Attacker moves from compromised asset toward DB-01. Possible via M365 services or staging API.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 140, "height": 50 },
+            "position": { "x": 650, "y": 410 },
+            "angle": 0,
+            "id": "aws-exposed",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "AWS Cloud\nPublicly Exposed" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "AWS Cloud Publicly Exposed",
+              "description": "OR branch. Cloud resources (S3, APIs) exposed due to misconfiguration. Found in Source B (external scan).",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 100, "height": 50 },
+            "position": { "x": 820, "y": 410 },
+            "angle": 0,
+            "id": "phishing",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "Phishing\n(email)" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "Phishing (email)",
+              "description": "AND branch (with Weak MFA). TA-2 APT technique. Target is one of 16 AD admin accounts or 6 Global Admins with no MFA. Follina (CVE-2022-30190) on 380 laptops makes this highly realistic.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 130, "height": 50 },
+            "position": { "x": 960, "y": 410 },
+            "angle": 0,
+            "id": "weak-mfa",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "Weak MFA\nImplementation" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "Weak MFA Implementation",
+              "description": "AND branch (with Phishing). 29% of Entra ID accounts have no MFA. Some Global Admins included. Source D.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 130, "height": 50 },
+            "position": { "x": 420, "y": 270 },
+            "angle": 0,
+            "id": "ms-services",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "M365 Services\nexposed" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "M365 Services Exposed",
+              "description": "OR branch. Microsoft 365 services reachable from compromised identity. SharePoint, Teams, Exchange accessible.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 130, "height": 50 },
+            "position": { "x": 570, "y": 270 },
+            "angle": 0,
+            "id": "staging-api",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "Staging API\nServer Exposed" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "Staging API Server Exposed",
+              "description": "OR branch. Found in Source B. Public-facing staging environment reveals internal API structure and may contain test credentials.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 130, "height": 50 },
+            "position": { "x": 650, "y": 270 },
+            "angle": 0,
+            "id": "security-misconfig",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "Security\nMisconfiguration" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "Security Misconfiguration",
+              "description": "OR branch. Cloud resources (S3 buckets, public endpoints) left open due to IAM misconfiguration. Found in Source B.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 130, "height": 50 },
+            "position": { "x": 880, "y": 270 },
+            "angle": 0,
+            "id": "admin-accounts",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "16 AD Admin\nAccounts" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "16 AD Admin Accounts",
+              "description": "AND target. 16 AD admin accounts, including 6 Entra ID Global Admins. If one is compromised via phishing with no MFA, attacker gets full cloud access.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 130, "height": 50 },
+            "position": { "x": 510, "y": 130 },
+            "angle": 0,
+            "id": "mitm",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "MITM on Staging API\n(unencrypted HTTP)" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "MITM on Staging API",
+              "description": "OR branch. Man-in-the-middle attack possible because staging API runs over plain HTTP (no TLS). Attacker on same network path intercepts traffic, API keys, tokens. Found in Source B.",
+              "threats": []
+            }
+          },
+
+          {
+            "type": "tm.Process",
+            "size": { "width": 130, "height": 50 },
+            "position": { "x": 80, "y": 270 },
+            "angle": 0,
+            "id": "bluekeep",
+            "zIndex": 10,
+            "attrs": { "text": { "text": "BlueKeep\nCVE-2019-0708" } },
+            "data": {
+              "type": "tm.Process",
+              "name": "BlueKeep CVE-2019-0708",
+              "description": "OR branch. CVSS 9.8. Wormable RDP exploit on unregistered machine (no owner, no hostname). In CISA KEV. Found only in Source B.",
+              "threats": []
+            }
+          },
+
+          { "type": "tm.Flow", "id": "f1",  "source": { "cell": "payment-server" }, "target": { "cell": "root" },         "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f2",  "source": { "cell": "db-access" },      "target": { "cell": "root" },         "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f3",  "source": { "cell": "cloud-identity" }, "target": { "cell": "root" },         "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f4",  "source": { "cell": "log4shell" },      "target": { "cell": "payment-server" }, "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f5",  "source": { "cell": "priv-esc" },       "target": { "cell": "payment-server" }, "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f6",  "source": { "cell": "lateral" },        "target": { "cell": "db-access" },    "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f7",  "source": { "cell": "aws-exposed" },    "target": { "cell": "db-access" },    "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f8",  "source": { "cell": "phishing" },       "target": { "cell": "cloud-identity" }, "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "AND", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "AND" } } }] },
+          { "type": "tm.Flow", "id": "f9",  "source": { "cell": "weak-mfa" },       "target": { "cell": "cloud-identity" }, "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "AND", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "AND" } } }] },
+          { "type": "tm.Flow", "id": "f10", "source": { "cell": "ms-services" },    "target": { "cell": "lateral" },      "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f11", "source": { "cell": "staging-api" },    "target": { "cell": "lateral" },      "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f12", "source": { "cell": "security-misconfig" }, "target": { "cell": "aws-exposed" }, "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f13", "source": { "cell": "admin-accounts" }, "target": { "cell": "phishing" },     "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "AND", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "AND" } } }] },
+          { "type": "tm.Flow", "id": "f14", "source": { "cell": "mitm" },           "target": { "cell": "staging-api" },  "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] },
+          { "type": "tm.Flow", "id": "f15", "source": { "cell": "bluekeep" },       "target": { "cell": "payment-server" }, "attrs": { "line": { "targetMarker": { "name": "block" } } }, "data": { "type": "tm.Flow", "name": "OR", "description": "", "threats": [] }, "labels": [{ "attrs": { "label": { "text": "OR" } } }] }
+
+        ]
+      }
+    ],
+    "diagramTop": 1,
+    "reviewer": "",
+    "threatTop": 0
+  }
+}
